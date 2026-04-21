@@ -15,8 +15,35 @@ export default function Home() {
   });
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+
   const handleSubmit = async () => {
+    setError(null);
+    
     if (!formData.year || !formData.month || !formData.day || !formData.hour) {
+      setError('请填写完整的出生信息');
+      return;
+    }
+    
+    const year = parseInt(formData.year);
+    const month = parseInt(formData.month);
+    const day = parseInt(formData.day);
+    const hour = parseInt(formData.hour);
+    
+    if (isNaN(year) || year < 1900 || year > 2100) {
+      setError('年份需在 1900-2100 之间');
+      return;
+    }
+    if (isNaN(month) || month < 1 || month > 12) {
+      setError('月份需在 1-12 之间');
+      return;
+    }
+    if (isNaN(day) || day < 1 || day > 31) {
+      setError('日期需在 1-31 之间');
+      return;
+    }
+    if (isNaN(hour) || hour < 0 || hour > 23) {
+      setError('时辰需在 0-23 之间');
       return;
     }
     
@@ -178,6 +205,17 @@ export default function Home() {
             >
               起 卦
             </motion.button>
+
+            {/* 错误提示 */}
+            {error && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="text-center text-[#c93628] text-sm"
+              >
+                {error}
+              </motion.div>
+            )}
 
             {/* 说明文字 */}
             <p className="text-center text-xs text-[#666] pt-8 leading-relaxed">
