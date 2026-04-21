@@ -14,12 +14,12 @@ export default function Home() {
     gender: 'male' as 'male' | 'female'
   });
   const [baziResult, setBaziResult] = useState<BaziResult | null>(null);
-
   const [error, setError] = useState<string | null>(null);
 
-  const handleSubmit = async () => {
+  const handleSubmit = () => {
     setError(null);
     
+    // 验证
     if (!formData.year || !formData.month || !formData.day || !formData.hour) {
       setError('请填写完整的出生信息');
       return;
@@ -49,182 +49,196 @@ export default function Home() {
     
     setStep('calculating');
     
-    // 计算八字
-    const result = calculateBazi(
-      parseInt(formData.year),
-      parseInt(formData.month),
-      parseInt(formData.day),
-      parseInt(formData.hour),
-      formData.gender
-    );
-    
-    // 保存到 localStorage 供支付后使用
-    localStorage.setItem('mingpan_bazi', JSON.stringify(result));
-    localStorage.setItem('mingpan_birth', JSON.stringify({
-      year: parseInt(formData.year),
-      month: parseInt(formData.month),
-      day: parseInt(formData.day),
-      hour: parseInt(formData.hour),
-      gender: formData.gender
-    }));
-    
-    // 模拟延迟给用户仪式感
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setBaziResult(result);
-    setStep('result');
+    try {
+      // 计算八字
+      const result = calculateBazi(year, month, day, hour, formData.gender);
+      
+      // 保存到 localStorage
+      localStorage.setItem('mingpan_bazi', JSON.stringify(result));
+      localStorage.setItem('mingpan_birth', JSON.stringify({
+        year, month, day, hour,
+        gender: formData.gender
+      }));
+      
+      // 短暂延迟给用户反馈
+      setTimeout(() => {
+        setBaziResult(result);
+        setStep('result');
+      }, 800);
+      
+    } catch (err) {
+      console.error('计算错误:', err);
+      setError('计算出错，请检查输入信息');
+      setStep('input');
+    }
   };
 
-  const handleUnlock = () => {
-    // 跳转到支付页面
-    window.location.href = '/payment';
+  const handleReset = () => {
+    setStep('input');
+    setBaziResult(null);
+    setFormData({ year: '', month: '', day: '', hour: '', gender: 'male' });
   };
 
   return (
-    <main className="min-h-screen bg-[#0a0a0a] text-[#f5f5f0] overflow-hidden">
-      {/* 背景纹理 */}
-      <div className="fixed inset-0 opacity-[0.03] pointer-events-none"
-        style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23d4af37' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`,
-        }}
-      />
+    <main className="min-h-screen bg-[#faf8f3] text-[#2c2c2c] font-serif">
+      {/* 顶部导航 */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-[#faf8f3]/90 backdrop-blur-sm border-b border-[#e8e4dc]">
+        <div className="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+          <span className="text-lg tracking-[0.2em] text-[#2d4a3e]">命盘</span>
+          <span className="text-xs text-[#8b8680] tracking-wider">MING PAN</span>
+        </div>
+      </nav>
 
-      <div className="relative z-10 max-w-2xl mx-auto px-6 py-20">
-        {/* Logo */}
-        <motion.div 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="text-center mb-16"
-        >
-          <h1 className="text-5xl font-serif tracking-[0.3em] mb-4"
-            style={{ fontFamily: '"Noto Serif SC", serif' }}>
-            命 盘
-          </h1>
-          <p className="text-[#d4af37] text-sm tracking-[0.5em] uppercase">
-            Ming Pan · Digital Divination
-          </p>
-        </motion.div>
-
+      <div className="max-w-2xl mx-auto px-6 pt-32 pb-20">
+        
+        {/* 头部介绍 */}
         {step === 'input' && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="space-y-8"
+            className="text-center mb-16"
           >
-            {/* 分隔线 */}
-            <div className="flex items-center gap-4">
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#d4af37]/50 to-transparent" />
-              <span className="text-[#d4af37] text-xs tracking-widest">输入生辰</span>
-              <div className="flex-1 h-px bg-gradient-to-r from-transparent via-[#d4af37]/50 to-transparent" />
-            </div>
-
-            {/* 表单 */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-xs text-[#888] tracking-wider">年</label>
-                <input
-                  type="number"
-                  placeholder="1990"
-                  value={formData.year}
-                  onChange={(e) => setFormData({...formData, year: e.target.value})}
-                  className="w-full bg-transparent border-b border-[#333] focus:border-[#c93628] 
-                    py-3 text-center text-lg outline-none transition-colors
-                    placeholder:text-[#444]"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs text-[#888] tracking-wider">月</label>
-                <input
-                  type="number"
-                  placeholder="5"
-                  value={formData.month}
-                  onChange={(e) => setFormData({...formData, month: e.target.value})}
-                  className="w-full bg-transparent border-b border-[#333] focus:border-[#c93628] 
-                    py-3 text-center text-lg outline-none transition-colors
-                    placeholder:text-[#444]"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs text-[#888] tracking-wider">日</label>
-                <input
-                  type="number"
-                  placeholder="15"
-                  value={formData.day}
-                  onChange={(e) => setFormData({...formData, day: e.target.value})}
-                  className="w-full bg-transparent border-b border-[#333] focus:border-[#c93628] 
-                    py-3 text-center text-lg outline-none transition-colors
-                    placeholder:text-[#444]"
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-xs text-[#888] tracking-wider">时</label>
-                <input
-                  type="number"
-                  placeholder="15"
-                  value={formData.hour}
-                  onChange={(e) => setFormData({...formData, hour: e.target.value})}
-                  className="w-full bg-transparent border-b border-[#333] focus:border-[#c93628] 
-                    py-3 text-center text-lg outline-none transition-colors
-                    placeholder:text-[#444]"
-                />
-              </div>
-            </div>
-
-            {/* 性别选择 */}
-            <div className="flex justify-center gap-8 pt-4">
-              <button
-                onClick={() => setFormData({...formData, gender: 'male'})}
-                className={`px-8 py-3 border transition-all duration-300
-                  ${formData.gender === 'male' 
-                    ? 'border-[#c93628] text-[#c93628]' 
-                    : 'border-[#333] text-[#666] hover:border-[#555]'}`}
-              >
-                乾 · 男
-              </button>
-              <button
-                onClick={() => setFormData({...formData, gender: 'female'})}
-                className={`px-8 py-3 border transition-all duration-300
-                  ${formData.gender === 'female' 
-                    ? 'border-[#c93628] text-[#c93628]' 
-                    : 'border-[#333] text-[#666] hover:border-[#555]'}`}
-              >
-                坤 · 女
-              </button>
-            </div>
-
-            {/* 提交按钮 */}
-            <motion.button
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={handleSubmit}
-              className="w-full py-4 mt-8 bg-gradient-to-r from-[#c93628] to-[#a0281d]
-                text-white tracking-[0.3em] font-medium
-                hover:from-[#d44030] hover:to-[#b03020]
-                transition-all duration-300 shadow-lg shadow-[#c93628]/20"
-            >
-              起 卦
-            </motion.button>
-
-            {/* 错误提示 */}
-            {error && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center text-[#c93628] text-sm"
-              >
-                {error}
-              </motion.div>
-            )}
-
-            {/* 说明文字 */}
-            <p className="text-center text-xs text-[#666] pt-8 leading-relaxed">
-              基于《渊海子平》《滴天髓》等九部典籍<br />
-              Python 刚性计算 · 零 AI 幻觉
+            <h1 className="text-4xl md:text-5xl mb-6 tracking-wider text-[#2c2c2c]">
+              探索你的命盘
+            </h1>
+            <p className="text-[#8b8680] text-sm md:text-base leading-relaxed max-w-md mx-auto">
+              基于传统命理学的智能分析工具<br/>
+              算法排盘 · 典籍引用 · 个性化解读
             </p>
           </motion.div>
         )}
 
+        {/* 输入表单 */}
+        {step === 'input' && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="bg-white rounded-2xl shadow-sm border border-[#e8e4dc] p-8 md:p-10"
+          >
+            <div className="space-y-8">
+              {/* 出生日期 */}
+              <div>
+                <label className="block text-xs tracking-widest text-[#8b8680] mb-4 uppercase">
+                  出生日期（公历）
+                </label>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="1990"
+                      value={formData.year}
+                      onChange={(e) => setFormData({...formData, year: e.target.value})}
+                      className="w-full bg-[#faf8f3] border border-[#e8e4dc] rounded-lg px-4 py-3 
+                        text-center text-lg outline-none focus:border-[#2d4a3e] transition-colors
+                        placeholder:text-[#c4c0b8]"
+                    />
+                    <span className="text-xs text-[#8b8680] mt-1 block text-center">年</span>
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="5"
+                      value={formData.month}
+                      onChange={(e) => setFormData({...formData, month: e.target.value})}
+                      className="w-full bg-[#faf8f3] border border-[#e8e4dc] rounded-lg px-4 py-3 
+                        text-center text-lg outline-none focus:border-[#2d4a3e] transition-colors
+                        placeholder:text-[#c4c0b8]"
+                    />
+                    <span className="text-xs text-[#8b8680] mt-1 block text-center">月</span>
+                  </div>
+                  <div>
+                    <input
+                      type="number"
+                      placeholder="15"
+                      value={formData.day}
+                      onChange={(e) => setFormData({...formData, day: e.target.value})}
+                      className="w-full bg-[#faf8f3] border border-[#e8e4dc] rounded-lg px-4 py-3 
+                        text-center text-lg outline-none focus:border-[#2d4a3e] transition-colors
+                        placeholder:text-[#c4c0b8]"
+                    />
+                    <span className="text-xs text-[#8b8680] mt-1 block text-center">日</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* 出生时辰 */}
+              <div>
+                <label className="block text-xs tracking-widest text-[#8b8680] mb-4 uppercase">
+                  出生时辰（24小时制）
+                </label>
+                <input
+                  type="number"
+                  placeholder="14"
+                  min="0"
+                  max="23"
+                  value={formData.hour}
+                  onChange={(e) => setFormData({...formData, hour: e.target.value})}
+                  className="w-full bg-[#faf8f3] border border-[#e8e4dc] rounded-lg px-4 py-3 
+                    text-center text-lg outline-none focus:border-[#2d4a3e] transition-colors
+                    placeholder:text-[#c4c0b8]"
+                />
+                <p className="text-xs text-[#a8a298] mt-2">输入 0-23 的数字，例如下午 2 点输入 14</p>
+              </div>
+
+              {/* 性别选择 */}
+              <div>
+                <label className="block text-xs tracking-widest text-[#8b8680] mb-4 uppercase">
+                  性别
+                </label>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => setFormData({...formData, gender: 'male'})}
+                    className={`flex-1 py-3 rounded-lg border transition-all duration-300
+                      ${formData.gender === 'male' 
+                        ? 'border-[#2d4a3e] bg-[#2d4a3e] text-white' 
+                        : 'border-[#e8e4dc] text-[#8b8680] hover:border-[#2d4a3e]/50'}`}
+                  >
+                    男
+                  </button>
+                  <button
+                    onClick={() => setFormData({...formData, gender: 'female'})}
+                    className={`flex-1 py-3 rounded-lg border transition-all duration-300
+                      ${formData.gender === 'female' 
+                        ? 'border-[#2d4a3e] bg-[#2d4a3e] text-white' 
+                        : 'border-[#e8e4dc] text-[#8b8680] hover:border-[#2d4a3e]/50'}`}
+                  >
+                    女
+                  </button>
+                </div>
+              </div>
+
+              {/* 错误提示 */}
+              {error && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="text-[#c45c4a] text-sm text-center bg-[#c45c4a]/10 rounded-lg py-3"
+                >
+                  {error}
+                </motion.div>
+              )}
+
+              {/* 提交按钮 */}
+              <button
+                onClick={handleSubmit}
+                className="w-full py-4 bg-[#2d4a3e] text-white rounded-lg text-base tracking-wider
+                  hover:bg-[#1f352c] active:scale-[0.98] transition-all duration-200
+                  shadow-lg shadow-[#2d4a3e]/20"
+              >
+                开始排盘
+              </button>
+
+              {/* 说明 */}
+              <p className="text-center text-xs text-[#a8a298] leading-relaxed">
+                基于传统八字排盘算法<br/>
+                仅供娱乐参考
+              </p>
+            </div>
+          </motion.div>
+        )}
+
+        {/* 推算中 */}
         {step === 'calculating' && (
           <motion.div
             initial={{ opacity: 0 }}
@@ -233,115 +247,144 @@ export default function Home() {
           >
             <motion.div
               animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-              className="w-16 h-16 mx-auto mb-8 border-2 border-[#d4af37] border-t-transparent rounded-full"
+              transition={{ duration: 2, repeat: Infinity, ease: "linear" }}
+              className="w-12 h-12 mx-auto mb-6 border-2 border-[#2d4a3e] border-t-transparent rounded-full"
             />
-            <p className="text-[#d4af37] tracking-[0.3em] text-sm">推算中...</p>
+            <p className="text-[#8b8680] tracking-wider">正在排盘...</p>
           </motion.div>
         )}
 
+        {/* 结果展示 */}
         {step === 'result' && baziResult && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            className="space-y-8"
+            className="space-y-6"
           >
-            {/* 八字结果 */}
-            <div className="text-center space-y-6">
-              <div className="flex justify-center gap-2">
+            {/* 八字卡片 */}
+            <div className="bg-white rounded-2xl shadow-sm border border-[#e8e4dc] p-8">
+              <h2 className="text-xs tracking-widest text-[#8b8680] uppercase mb-6 text-center">
+                八字命盘
+              </h2>
+              
+              <div className="grid grid-cols-4 gap-3">
                 {[
-                  `${baziResult.year.gan}${baziResult.year.zhi}`,
-                  `${baziResult.month.gan}${baziResult.month.zhi}`,
-                  `${baziResult.day.gan}${baziResult.day.zhi}`,
-                  `${baziResult.hour.gan}${baziResult.hour.zhi}`
+                  { label: '年柱', gan: baziResult.year.gan, zhi: baziResult.year.zhi },
+                  { label: '月柱', gan: baziResult.month.gan, zhi: baziResult.month.zhi },
+                  { label: '日柱', gan: baziResult.day.gan, zhi: baziResult.day.zhi },
+                  { label: '时柱', gan: baziResult.hour.gan, zhi: baziResult.hour.zhi },
                 ].map((pillar, i) => (
                   <motion.div
                     key={i}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: i * 0.1 }}
-                    className="w-16 h-24 border border-[#333] flex flex-col items-center justify-center
-                      bg-gradient-to-b from-[#111] to-transparent"
+                    className="text-center"
                   >
-                    <span className="text-xs text-[#666] mb-2">
-                      {['年', '月', '日', '时'][i]}
-                    </span>
-                    <span className="text-lg font-serif text-[#d4af37]">{pillar}</span>
+                    <div className="text-xs text-[#a8a298] mb-2">{pillar.label}</div>
+                    <div className="bg-[#faf8f3] rounded-lg py-4 border border-[#e8e4dc]">
+                      <div className="text-2xl font-medium text-[#2c2c2c] mb-1">{pillar.gan}</div>
+                      <div className="text-lg text-[#8b8680]">{pillar.zhi}</div>
+                    </div>
                   </motion.div>
                 ))}
               </div>
 
               {/* 日主 */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.4 }}
-                className="text-center"
-              >
-                <span className="text-xs text-[#666]">日主</span>
-                <span className="ml-2 text-[#d4af37] font-serif">{baziResult.dayMaster}</span>
-              </motion.div>
+              <div className="mt-6 pt-6 border-t border-[#e8e4dc] text-center">
+                <span className="text-xs text-[#8b8680]">日主</span>
+                <span className="ml-3 text-xl font-medium text-[#2d4a3e]">{baziResult.dayMaster}</span>
+              </div>
+            </div>
 
-              {/* 五行分布 */}
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                className="py-8"
-              >
-                <div className="flex justify-center gap-1 h-32 items-end">
-                  {[
-                    { name: '金', value: baziResult.wuxing.jin, color: '#c0c0c0' },
-                    { name: '木', value: baziResult.wuxing.mu, color: '#2d5a3d' },
-                    { name: '水', value: baziResult.wuxing.shui, color: '#1e3a5f' },
-                    { name: '火', value: baziResult.wuxing.huo, color: '#c93628' },
-                    { name: '土', value: baziResult.wuxing.tu, color: '#8b7355' },
-                  ].map((item) => (
-                    <div key={item.name} className="flex flex-col items-center gap-2 w-12">
-                      <motion.div
-                        initial={{ height: 0 }}
-                        animate={{ height: `${Math.max(item.value * 2, 10)}px` }}
-                        transition={{ duration: 1, delay: 0.8 }}
-                        className="w-full rounded-t"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-xs text-[#888]">{item.name}</span>
-                      <span className="text-[10px] text-[#666]">{item.value}%</span>
-                    </div>
-                  ))}
-                </div>
-              </motion.div>
+            {/* 五行分析 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="bg-white rounded-2xl shadow-sm border border-[#e8e4dc] p-8"
+            >
+              <h2 className="text-xs tracking-widest text-[#8b8680] uppercase mb-6 text-center">
+                五行分布
+              </h2>
+              
+              <div className="flex items-end justify-center gap-4 h-40">
+                {[
+                  { name: '金', value: baziResult.wuxing.jin, color: '#9ca3af' },
+                  { name: '木', value: baziResult.wuxing.mu, color: '#2d4a3e' },
+                  { name: '水', value: baziResult.wuxing.shui, color: '#5b7c99' },
+                  { name: '火', value: baziResult.wuxing.huo, color: '#c45c4a' },
+                  { name: '土', value: baziResult.wuxing.tu, color: '#a89078' },
+                ].map((item) => (
+                  <div key={item.name} className="flex flex-col items-center w-12">
+                    <motion.div
+                      initial={{ height: 0 }}
+                      animate={{ height: `${Math.max(item.value * 1.5, 20)}px` }}
+                      transition={{ duration: 0.8, delay: 0.5 }}
+                      className="w-full rounded-t-md"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="text-xs text-[#8b8680] mt-2">{item.name}</span>
+                    <span className="text-[10px] text-[#a8a298]">{item.value}%</span>
+                  </div>
+                ))}
+              </div>
+            </motion.div>
 
-              {/* 付费引导 */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 1.2 }}
-                className="border border-[#d4af37]/30 bg-gradient-to-b from-[#d4af37]/5 to-transparent p-6"
+            {/* 解锁详细分析 */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.6 }}
+              className="bg-gradient-to-br from-[#2d4a3e] to-[#1f352c] rounded-2xl p-8 text-white"
+            >
+              <div className="text-center mb-6">
+                <h3 className="text-lg mb-2">解锁详细命盘分析</h3>
+                <p className="text-sm text-white/70">AI 个性化解读 · 典籍引用 · PDF 报告</p>
+              </div>
+              
+              <ul className="text-sm text-white/80 space-y-2 mb-6">
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#c9a961] rounded-full"></span>
+                  十神格局详解
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#c9a961] rounded-full"></span>
+                  大运流年分析
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#c9a961] rounded-full"></span>
+                  《渊海子平》《滴天髓》典籍引用
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="w-1 h-1 bg-[#c9a961] rounded-full"></span>
+                  高清 PDF 报告下载
+                </li>
+              </ul>
+
+              <button className="w-full py-3 bg-[#c9a961] text-[#2c2c2c] rounded-lg font-medium
+                hover:bg-[#d4b56a] transition-colors">
+                立即解锁 · ¥19.9
+              </button>
+            </motion.div>
+
+            {/* 重新排盘 */}
+            <div className="text-center">
+              <button
+                onClick={handleReset}
+                className="text-sm text-[#8b8680] hover:text-[#2d4a3e] transition-colors"
               >
-                <div className="flex items-center justify-center gap-2 mb-4">
-                  <span className="text-[#d4af37]">🔒</span>
-                  <span className="text-sm tracking-wider">解锁详细分析</span>
-                </div>
-                <ul className="text-xs text-[#888] space-y-2 mb-6">
-                  <li>· 十神详解（正官/偏印/食神...）</li>
-                  <li>· 大运流年表（2025-2035）</li>
-                  <li>· 典籍引用（滴天髓/渊海子平）</li>
-                  <li>· 高清 PDF 报告</li>
-                </ul>
-                <button 
-                  onClick={handleUnlock}
-                  className="w-full py-3 border border-[#c93628] text-[#c93628] 
-                    hover:bg-[#c93628] hover:text-white transition-all duration-300
-                    tracking-[0.2em]"
-                >
-                  立即解锁 · ¥19.9
-                </button>
-              </motion.div>
+                ← 重新排盘
+              </button>
             </div>
           </motion.div>
         )}
       </div>
+
+      {/* 底部 */}
+      <footer className="text-center py-8 text-xs text-[#a8a298]">
+        <p>命盘 · 用代码探索传统智慧</p>
+      </footer>
     </main>
   );
 }
