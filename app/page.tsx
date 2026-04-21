@@ -31,11 +31,26 @@ export default function Home() {
       formData.gender
     );
     
+    // 保存到 localStorage 供支付后使用
+    localStorage.setItem('mingpan_bazi', JSON.stringify(result));
+    localStorage.setItem('mingpan_birth', JSON.stringify({
+      year: parseInt(formData.year),
+      month: parseInt(formData.month),
+      day: parseInt(formData.day),
+      hour: parseInt(formData.hour),
+      gender: formData.gender
+    }));
+    
     // 模拟延迟给用户仪式感
     await new Promise(resolve => setTimeout(resolve, 1500));
     
     setBaziResult(result);
     setStep('result');
+  };
+
+  const handleUnlock = () => {
+    // 跳转到支付页面
+    window.location.href = '/payment';
   };
 
   return (
@@ -276,9 +291,12 @@ export default function Home() {
                   <li>· 典籍引用（滴天髓/渊海子平）</li>
                   <li>· 高清 PDF 报告</li>
                 </ul>
-                <button className="w-full py-3 border border-[#c93628] text-[#c93628] 
-                  hover:bg-[#c93628] hover:text-white transition-all duration-300
-                  tracking-[0.2em]">
+                <button 
+                  onClick={handleUnlock}
+                  className="w-full py-3 border border-[#c93628] text-[#c93628] 
+                    hover:bg-[#c93628] hover:text-white transition-all duration-300
+                    tracking-[0.2em]"
+                >
                   立即解锁 · ¥19.9
                 </button>
               </motion.div>

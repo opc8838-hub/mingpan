@@ -53,6 +53,35 @@ npm run build
 - [x] 八字输入表单
 - [x] 基础结果展示
 - [x] 五行分布可视化
-- [ ] 支付接入（Stripe/微信）
+- [x] 支付接入（Stripe）
 - [ ] PDF 报告生成
-- [ ] 后端计算 API
+- [x] 后端计算 API（已完成）
+
+## Stripe 支付配置
+
+### 1. 注册 Stripe 账号
+- 访问 https://stripe.com
+- 支持个人开发者，无需营业执照
+
+### 2. 获取 API Keys
+```
+Dashboard → Developers → API keys
+
+Publishable key: pk_test_... (前端用)
+Secret key: sk_test_... (后端用)
+```
+
+### 3. 配置环境变量
+```bash
+cp .env.example .env.local
+# 编辑 .env.local，填入你的 keys
+```
+
+### 4. 测试支付
+- 使用 Stripe 测试卡号：`4242 4242 4242 4242`
+- 任意未来日期 + 任意 3 位 CVC
+
+### 5. 上线切换
+- 激活 Stripe 账号（需身份证 + 银行账户）
+- 切换为 Live keys
+- 手续费：2.9% + ¥1.5/笔
