@@ -95,7 +95,7 @@ function buildPrompt(bazi: any, birthInfo: any): string {
   const dayMasterWuxing = ganWuxing[bazi.day.gan] || '未知';
   
   // 找出最旺和最弱的五行
-  const wuxingEntries = Object.entries(bazi.wuxing);
+  const wuxingEntries: [string, number][] = Object.entries(bazi.wuxing);
   const maxWuxing = wuxingEntries.reduce((a, b) => a[1] > b[1] ? a : b);
   const minWuxing = wuxingEntries.reduce((a, b) => a[1] < b[1] ? a : b);
   
